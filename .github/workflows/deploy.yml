@@ -1,0 +1,180 @@
+name: Build Python Application
+ 
+on:
+  workflow_dispatch:
+ 
+jobs:
+ 
+  build:
+    runs-on: ubuntu-latest
+ 
+    env:
+      REPO2: jayaprakashll/pythonapp2
+      IMAGE_NAME: python-app
+ 
+    steps:
+ 
+ 
+      - name: Checkout Repo 1
+        uses: actions/checkout@v4
+ 
+ 
+ 
+      - name: Show project files
+        run: |
+          echo "Repo 1 files:"
+          ls -la
+ 
+ 
+ 
+      - name: Show Python version
+        run: |
+          python3 --version
+ 
+ 
+ 
+      - name: Check Docker
+        run: |
+          docker --version
+ 
+ 
+ 
+      - name: Generate Docker tag
+        run: |
+ 
+          IMAGE_TAG=${GITHUB_SHA::7}
+ 
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+ 
+          echo "Docker tag:"
+          echo "$IMAGE_TAG"
+ 
+ 
+ 
+      - name: Build Docker image
+        run: |
+ 
+          docker build \
+            -t ${IMAGE_NAME}:${IMAGE_TAG} \
+            .
+ 
+          echo "Docker image created:"
+          echo "${IMAGE_NAME}:${IMAGE_TAG}"
+ 
+ 
+    
+ 
+      - name: Show Docker images
+        run: |
+ 
+          docker images
+ 
+ 
+
+ 
+      - name: Clone Repo 2
+        run: |
+ 
+          git clone \
+            https://github.com/jayaprakashll/pythonapp2.git
+ 
+ 
+      - name: Show Repo 2 files
+        run: |
+ 
+          echo "Repo 2 files:"
+ 
+          find pythonapp2 -type f
+ 
+ 
+     
+ 
+      - name: Show current Kubernetes image
+        run: |
+ 
+          echo "Current image in deployment.yaml:"
+ 
+          grep "image:" \
+            pythonapp2/k8s/deployment.yaml
+ 
+ 
+     
+ 
+      - name: Update Docker tag in Kubernetes YAML
+        run: |
+ 
+          python3 - <<'PY'
+ 
+          import os
+          import re
+ 
+          file_path = "pythonapp2/k8s/deployment.yaml"
+ 
+          image_tag = os.environ["IMAGE_TAG"]
+ 
+          new_image = f"python-app:{image_tag}"
+ 
+          print("New Kubernetes image:")
+          print(new_image)
+ 
+          with open(file_path, "r") as file:
+              content = file.read()
+ 
+          content = re.sub(
+              r"image:\s*.*",
+              f"image: {new_image}",
+              content,
+              count=1
+          )
+ 
+          with open(file_path, "w") as file:
+              file.write(content)
+ 
+          print("Docker tag updated successfully.")
+ 
+          PY
+ 
+ 
+ 
+      - name: Show updated Kubernetes YAML
+        run: |
+ 
+          echo "Updated deployment.yaml:"
+ 
+          cat pythonapp2/k8s/deployment.yaml
+ 
+ 
+ 
+      - name: Configure Git
+        run: |
+ 
+          cd pythonapp2
+ 
+          git config user.name "github-actions"
+ 
+          git config user.email "github-actions@github.com"
+ 
+ 
+      - name: Commit Kubernetes changes
+        run: |
+ 
+          cd pythonapp2
+ 
+          git add k8s/deployment.yaml
+ 
+          git commit \
+            -m "Update python-app image to ${IMAGE_TAG}" \
+            || echo "No changes to commit"
+ 
+      - name: Push changes to Repo 2
+        env:
+          REPO2_TOKEN: ${{ secrets.REPO2_TOKEN }}
+ 
+        run: |
+ 
+          cd pythonapp2
+ 
+          git remote set-url origin \
+            "https://x-access-token:${REPO2_TOKEN}@github.com/${REPO2}.git"
+ 
+          git push origin HEAD:main
