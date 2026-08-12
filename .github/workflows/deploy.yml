@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
  
     env:
-      REPO2: jayaprakashll/pythonapp2
+      REPO2: Srikanth-Munusamy/python-app2
       IMAGE_NAME: python-app
  
     steps:
@@ -76,7 +76,7 @@ jobs:
         run: |
  
           git clone \
-            https://github.com/jayaprakashll/pythonapp2.git
+            https://github.com/Srikanth-Munusamy/python-app2.git
  
  
       - name: Show Repo 2 files
@@ -95,7 +95,7 @@ jobs:
           echo "Current image in deployment.yaml:"
  
           grep "image:" \
-            pythonapp2/k8s/deployment.yaml
+            python-app2/k8s/deployment.yaml
  
  
      
@@ -108,7 +108,7 @@ jobs:
           import os
           import re
  
-          file_path = "pythonapp2/k8s/deployment.yaml"
+          file_path = "python-app2/k8s/deployment.yaml"
  
           image_tag = os.environ["IMAGE_TAG"]
  
@@ -141,14 +141,14 @@ jobs:
  
           echo "Updated deployment.yaml:"
  
-          cat pythonapp2/k8s/deployment.yaml
+          cat python-app2/k8s/deployment.yaml
  
  
  
       - name: Configure Git
         run: |
  
-          cd pythonapp2
+          cd python-app2
  
           git config user.name "github-actions"
  
@@ -158,7 +158,7 @@ jobs:
       - name: Commit Kubernetes changes
         run: |
  
-          cd pythonapp2
+          cd python-app2
  
           git add k8s/deployment.yaml
  
@@ -172,7 +172,7 @@ jobs:
  
         run: |
  
-          cd pythonapp2
+          cd python-app2
  
           git remote set-url origin \
             "https://x-access-token:${REPO2_TOKEN}@github.com/${REPO2}.git"
